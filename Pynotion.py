@@ -1,23 +1,16 @@
+from typing import Dict, List
 import requests
 
-TOKEN = "YOUR TOKEN"
-DATABASE_ID = "YOUR DB ID"
-NOTION_URL = "https://api.notion.com/v1/databases"
+from Config import config
 
 
-class Pynotion:
+class PyNotion:
     def __init__(self):
         pass
 
-    def query_databases(self):
-        database_url = f"{NOTION_URL}/{DATABASE_ID}"
-        headers = {
-            "Authorization": f"Bearer {TOKEN}",
-            "Notion-Version": "2021-05-13",
-            "Content-Type": "application/json",
-        }
-        print(database_url)
-        response = requests.request("GET", database_url, headers=headers)
+    def retrieve_databases(self, database: str):
+        database_url = f"{config.notion_url}/{database}"
+        response = requests.get(database_url, headers=config.headers)
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -26,8 +19,29 @@ class Pynotion:
         json_obj = response.json()
         return json_obj
 
+    def query_databases(
+        self,
+        database: str,
+        filter: Dict = None,
+        sorts: List = None,
+        start_cursor: str = None,
+        page_size: int = None,
+    ):
+        database_url = f"{config.notion_url}/{database}/query"
+        payload = {"page_size": page_size}
+        response = requests.post(database_url, headers=config.headers, data=payload)
+        try:
 
-nsync = Pynotion()
-data = nsync.query_databases()
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            return "Error: " + str(e)
+
+        json_obj = response.json()
+        return json_obj
+
+
+notion_obj = PyNotion()
+# data = notion_obj.query_databases(config.databases["actions"])
+data = notion_obj.query_databases(config.databases["actions"], page_size=20)
+
 print(data)
-print(type(data))
